@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Upload & Show Result Video</title>
+  <style>
+    :root{
+      --bg:#0f1724; --card:#0b1220; --muted:#9aa4b2; --accent:#06b6d4;
+      --glass: rgba(255,255,255,0.03);
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; background:linear-gradient(180deg,#071126 0%, #07122a 100%);
+      color:#e6eef6; min-height:100vh; display:flex; align-items:center; justify-content:center;
+      padding:24px;
+    }
+    .container{
+      width:100%; max-width:960px; background:var(--card); border-radius:12px; padding:20px;
+      box-shadow: 0 6px 30px rgba(2,6,23,0.6);
+      display:grid; gap:18px;
+      grid-template-columns: 1fr 1fr;
+    }
+    header{grid-column:1/-1; display:flex; align-items:center; justify-content:space-between}
+    h1{margin:0; font-size:1.1rem}
+    p.lead{margin:4px 0 0; color:var(--muted); font-size:0.9rem}
+    .dropzone{
+      border:2px dashed rgba(255,255,255,0.06); border-radius:10px; padding:18px; text-align:center;
+      background:var(--glass); cursor:pointer; transition:all .12s ease;
+    }
+    .dropzone.dragover{border-color:var(--accent); transform:translateY(-3px)}
+    .controls{display:flex; gap:8px; margin-top:10px; justify-content:center}
+    button{background:var(--accent); color:#04202a; border:none; padding:8px 12px; border-radius:8px; cursor:pointer}
+    .small{font-size:0.85rem; padding:6px 10px}
+    .preview-box{background:#071427; border-radius:10px; padding:12px; min-height:260px; display:flex; flex-direction:column; gap:10px}
+    video{max-width:100%; border-radius:8px; background:#000; outline:1px solid rgba(255,255,255,0.03)}
+    .meta{color:var(--muted); font-size:0.85rem}
+    .progress{height:10px; background:rgba(255,255,255,0.03); border-radius:8px; overflow:hidden}
+    .progress > i{display:block; height:100%; width:0%; background:linear-gradient(90deg,var(--accent), #60a5fa); transition:width .1s linear}
+    .footer{grid-column:1/-1; color:var(--muted); font-size:0.85rem; display:flex; justify-content:space-between; align-items:center}
+    .hidden{display:none}
+    @media (max-width:860px){ .container{grid-template-columns:1fr} }
+  </style>
+</head>
+<body>
+  <div class="container" role="main">
+    <header>
+      <div>
+        <h1>Upload a video → show result</h1>
+        <p class="lead">Pick or drop a video. The server processes it and returns a result video which will be shown here.</p>
+      </div>
+      <div style="text-align:right;color:var(--muted);font-size:0.9rem">
+        Demo • Local only
+      </div>
+    </header>
+
+    <!-- Left: Upload -->
+    <div>
+      <label id="dropzone" class="dropzone" tabindex="0">
+        <div id="dz-text">
+          <strong>Drop video here</strong><br />
+          or <button type="button" id="pickBtn" class="small">Choose file</button>
+          <div style="margin-top:8px;color:var(--muted);font-size:0.85rem">MP4, WebM, MOV — recommended ≤ 100MB for testing</div>
+        </div>
+        <input id="fileInput" type="file" accept="video/*" class="hidden" />
+      </label>
+
+      <div class="controls" aria-hidden>
+        <button id="uploadBtn" class="small" disabled>Upload & Process</button>
+        <button id="resetBtn" class="small" type="button">Reset</button>
+      </div>
+
+      <div style="margin-top:12px" id="inputPreview" class="preview-box hidden">
+        <div style="display:flex; justify-content:space-between; align-items:center">
+          <div class="meta" id="inputMeta">Selected file: —</div>
+          <div id="inputSize" class="meta"></div>
+        </div>
+        <video id="sourceVideo" controls></video>
+      </div>
+    </div>
+
+    <!-- Right: Result -->
+    <div>
+      <div id="resultBox" class="preview-box">
+        <div style="display:flex; justify-content:space-between; align-items:center">
+          <div>
+            <div style="font-weight:600">Result video</div>
+            <div class="meta" id="resultMeta">No result yet</div>
+          </div>
+          <div id="downloadWrap" class="hidden">
+            <a id="downloadLink" class="small" href="#" download>Download</a>
+          </div>
+        </div>
+
+        <video id="resultVideo" controls class="hidden"></video>
+
+        <div id="progressWrap" class="hidden" style="margin-top:auto">
+          <div class="meta">Uploading / processing…</div>
+          <div class="progress" aria-hidden>
+            <i id="progressBar"></i>
+          </div>
+        </div>
+
+        <div id="error" class="meta" style="color:#ff9b9b"></div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div>Server endpoint: <code>/upload</code></div>
+      <div class="meta">Tip: run the sample Flask server provided to test end-to-end</div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const pickBtn = document.getElementById('pickBtn');
+  const uploadBtn = document.getElementById('uploadBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const inputPreview = document.getElementById('inputPreview');
+  const sourceVideo = document.getElementById('sourceVideo');
+  const inputMeta = document.getElementById('inputMeta');
+  const inputSize = document.getElementById('inputSize');
+
+  const resultVideo = document.getElementById('resultVideo');
+  const resultMeta = document.getElementById('resultMeta');
+  const downloadLink = document.getElementById('downloadLink');
+  const downloadWrap = document.getElementById('downloadWrap');
+  const progressWrap = document.getElementById('progressWrap');
+  const progressBar = document.getElementById('progressBar');
+  const uploadProgressError = document.getElementById('error');
+
+  let selectedFile = null;
+
+  // pick button wired to file input
+  pickBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    fileInput.click();
+  });
+
+  // drag events
+  ['dragenter','dragover'].forEach(ev => {
+    dropzone.addEventListener(ev, (e) => {
+      e.preventDefault(); e.stopPropagation();
+      dropzone.classList.add('dragover');
+    });
+  });
+  ['dragleave','drop'].forEach(ev => {
+    dropzone.addEventListener(ev, (e) => {
+      e.preventDefault(); e.stopPropagation();
+      dropzone.classList.remove('dragover');
+    });
+  });
+
+  // drop handling
+  dropzone.addEventListener('drop', (e) => {
+    const dt = e.dataTransfer;
+    if (!dt) return;
+    const files = dt.files;
+    if (files.length) handleFile(files[0]);
+  });
+
+  // file input
+  fileInput.addEventListener('change', (e) => {
+    if (fileInput.files.length) handleFile(fileInput.files[0]);
+  });
+
+  function handleFile(file){
+    if (!file.type.startsWith('video/')) {
+      alert('Please select a video file.');
+      return;
+    }
+    selectedFile = file;
+    inputMeta.textContent = `Selected: ${file.name}`;
+    inputSize.textContent = humanFileSize(file.size);
+    sourceVideo.src = URL.createObjectURL(file);
+    sourceVideo.load();
+    inputPreview.classList.remove('hidden');
+    uploadBtn.disabled = false;
+    uploadProgressError.textContent = '';
+    resultMeta.textContent = 'No result yet';
+    resultVideo.classList.add('hidden');
+    downloadWrap.classList.add('hidden');
+  }
+
+  resetBtn.addEventListener('click', () => {
+    selectedFile = null;
+    fileInput.value = '';
+    inputPreview.classList.add('hidden');
+    sourceVideo.src = '';
+    uploadBtn.disabled = true;
+    resultVideo.src = '';
+    resultVideo.classList.add('hidden');
+    downloadWrap.classList.add('hidden');
+    progressWrap.classList.add('hidden');
+    progressBar.style.width = '0%';
+    uploadProgressError.textContent = '';
+    resultMeta.textContent = 'No result yet';
+  });
+
+  // upload to server endpoint /upload
+  uploadBtn.addEventListener('click', () => {
+    if (!selectedFile) return;
+    uploadBtn.disabled = true;
+    progressWrap.classList.remove('hidden');
+    progressBar.style.width = '2%';
+    uploadProgressError.textContent = '';
+
+    const form = new FormData();
+    form.append('file', selectedFile, selectedFile.name);
+
+    // Use XHR to show upload progress
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/upload', true);
+    xhr.responseType = 'blob'; // expect the result video as a blob
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        const percent = Math.round((e.loaded / e.total) * 80); // uploading part (0-80%)
+        progressBar.style.width = percent + '%';
+      }
+    };
+    xhr.onprogress = (e) => {
+      // server-side processing part (progress is not precise here)
+      if (e.lengthComputable) {
+        const percent = 80 + Math.round((e.loaded / e.total) * 10);
+        progressBar.style.width = Math.min(percent, 95) + '%';
+      }
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        const blob = xhr.response;
+        const mime = blob.type || 'video/mp4';
+        const url = URL.createObjectURL(blob);
+
+        resultVideo.src = url;
+        resultVideo.load();
+        resultVideo.classList.remove('hidden');
+
+        resultMeta.textContent = `Processed: ${selectedFile.name}`;
+        downloadLink.href = url;
+        // suggest a filename for download
+        downloadLink.download = `result-${selectedFile.name}`;
+        downloadWrap.classList.remove('hidden');
+
+        progressBar.style.width = '100%';
+        setTimeout(() => {
+          progressWrap.classList.add('hidden');
+          progressBar.style.width = '0%';
+        }, 700);
+
+      } else {
+        handleError(`Upload failed: ${xhr.status} ${xhr.statusText}`);
+      }
+      uploadBtn.disabled = false;
+    };
+    xhr.onerror = () => {
+      handleError('Network error during upload.');
+      uploadBtn.disabled = false;
+    };
+    xhr.send(form);
+  });
+
+  function handleError(msg){
+    progressWrap.classList.add('hidden');
+    progressBar.style.width = '0%';
+    uploadProgressError.textContent = msg;
+  }
+
+  function humanFileSize(bytes) {
+    const thresh = 1024;
+    if (Math.abs(bytes) < thresh) return bytes + ' B';
+    const units = ['KB','MB','GB','TB','PB','EB','ZB','YB'];
+    let u = -1;
+    do {
+      bytes /= thresh;
+      ++u;
+    } while (Math.abs(bytes) >= thresh && u < units.length - 1);
+    return bytes.toFixed(1) + ' ' + units[u];
+  }
+
+  // keyboard accessibility to open file picker when Enter pressed on dropzone
+  dropzone.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      fileInput.click();
+    }
+  });
+
+})();
+</script>
+</body>
+</html>
