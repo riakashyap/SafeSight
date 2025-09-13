@@ -14,6 +14,7 @@ from ultralytics.nn.modules.block import C2f, Bottleneck, SPPF
 from torch.nn.modules.container import Sequential
 import json
 import tensorflow as tf
+from waitress import serve
 
 
 if getattr(sys, "frozen", False):
@@ -62,10 +63,9 @@ print("model initialised")
 def home():
     return render_template("homepage.html")
 
-@app.route("/index")
+@app.route("/upload_page")
 def index():
-    return render_template("index.html")
-
+    return render_template("upload_page.html")
 
 @app.route('/upload', methods=['POST'])
 def upload():
@@ -84,12 +84,12 @@ def upload():
     try:
         result_list = model(tmp_path,save =True)
         processed_path = result_list[0].save_dir 
-        #result_json = result_list.to_json
-
+        result_json = result_list[0].to_json()
+        
         processed_video = os.path.basename(result_list[0].path)
         processed_path = os.path.join(processed_path,processed_video)
         print(processed_path)
-        #print(json.dumps(result_json))
+        print(json.dumps(result_json))
         
 
         return send_file(processed_path, mimetype='video/mp4', as_attachment=False)
@@ -111,5 +111,6 @@ def add_header(response):
 if __name__ == '__main__':
     # dev server, use a proper WSGI server in production
     print("let's run")
+    serve(app, host="127.0.0.1", port=8080)
     app.run(host='127.0.0.1', port=8080, debug=True)
     print("it ran")
