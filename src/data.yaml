@@ -1,0 +1,15 @@
+names:
+- Hardhat
+- Mask
+- NO-Hardhat
+- NO-Mask
+- NO-Safety Vest
+- Person
+- Safety Cone
+- Safety Vest
+- machinery
+- vehicle
+nc: 10
+test: ../dataset/construction-site-safety-image-dataset-roboflow/css-data/test
+train: ../dataset/construction-site-safety-image-dataset-roboflow/css-data/train
+val: ../dataset/construction-site-safety-image-dataset-roboflow/css-data/valid
