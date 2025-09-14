@@ -1,0 +1,6 @@
+api_key: "GE0QNX4-XHBMHJK-GRBF4A7-ZDAGM51"
+model_server_base_url: "http://localhost:3001/api/v1"
+# workspace_slug: "safesightchat"
+workspace_slug: "bird"
+stream: true
+stream_timeout: 60
