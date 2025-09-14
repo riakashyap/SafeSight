@@ -43,7 +43,7 @@ app.secret_key = "secret key"
 # Config
 # -------------------------------
 
-ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg","mp4","mov"}
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg","mp4","mov","avi","mkv"}
 
 
 def allowed_file(filename: str) -> bool:
@@ -66,33 +66,37 @@ def index():
 
 @app.route('/upload', methods=['POST'])
 def upload():
-   
     if 'file' not in request.files:
         return abort(400, "No file uploaded")
     f = request.files['file']
     if f.filename == '':
         return abort(400, "Empty filename")
 
-    # Save uploaded file to a temporary file
     with NamedTemporaryFile(delete=False, suffix=os.path.splitext(f.filename)[1]) as tmp:
         f.save(tmp.name)
         tmp_path = tmp.name
 
     try:
-        result_list = model(tmp_path,save =True)
-        processed_path = result_list[0].save_dir 
-        #result_json = result_list[0].to_json()
-        
-        processed_video = os.path.basename(result_list[0].path)
-        processed_path = os.path.join(processed_path,processed_video)
-        print(processed_path)
-        #print(json.dumps(result_json))
-        
+        result_list = model(tmp_path, save=True)
+        save_dir = result_list[0].save_dir
 
-        return send_file(processed_path, mimetype='video/mp4', as_attachment=False)
+        # Find the processed video file (usually .avi)
+        processed_video = None
+        for file in os.listdir(save_dir):
+            if file.endswith(".avi"):
+                processed_video = file
+                break
+
+        if not processed_video:
+            return abort(500, "Processed video (.avi) not found")
+
+        processed_path = os.path.join(save_dir, processed_video)
+        print("Serving processed video:", processed_path)
+
+        return send_file(processed_path, mimetype='video/avi', as_attachment=False)
     finally:
-       
-        pass
+        pass  # optionally delete tmp file if needed
+
 
 @app.after_request
 def add_header(response):
