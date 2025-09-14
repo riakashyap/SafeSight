@@ -42,7 +42,15 @@ pip install -r requirements.txt
 cd src
 python app.py
 ```
+
+### 5. Run the app
+
+To view the output videos navigate to `runs/detect/predict*`
+
 ---
+
+
+
 ## 👨‍💻 Developers
 
 - **Ria Kashyap** — [ria.k.kashyap@gmail.com](mailto:ria.k.kashyap@gmail.com)  
