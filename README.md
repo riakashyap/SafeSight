@@ -1,19 +1,19 @@
 # SafeSight
 
-SafeSight is an innovative application that enhances safety in hazardous environments by monitoring the compliance of helmets and personal protective equipment (PPE). This app not only ensures that workers are adequately protected but also includes a chatbot for instant access to safety information, significantly improving safety protocols and response times in critical situations. With all computation kept on-device, it ensures privacy by design while leveraging NPUs for performance.
+SafeSight is an innovative application that enhances safety in hazardous environments by monitoring the employees and danger zones. This app not only ensures that workers are adequately protected but also includes a chatbot for instant access to safety information, significantly improving safety protocols and response times in critical situations. With all computation kept on-device, it ensures privacy by design while leveraging NPUs for performance.
 ---
 
 ## 🚀 Features
-- Feature 1
-- Feature 2
-- Feature 3
+- Application that can take videos as an input
+- Application can detect employees in a given site
+- Supervisor can get natural language answers from the detected logs through AnythingLLM
 
 ---
 
 ## 🛠️ Tech Stack
 - **Frontend:** HTML / CSS / JavaScript
 - **Backend:** Flask
-- **Other Tools:** ONNX / Pytorch 
+- **Other Tools:** ONNX / Pytorch / AnythingLLM
 
 ---
 
