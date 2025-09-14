@@ -22,7 +22,7 @@ SafeSight is an innovative application that enhances safety in hazardous environ
 ### 1. Prerequisites
 Make sure you have the following installed on your system:
 - [Git](https://git-scm.com/)  
-- [Python 3.10+](https://www.python.org/)
+- [Python 3.9+](https://www.python.org/)
 - [.NET 8+ SDK](https://dotnet.microsoft.com/download) (for backend with ONNX)  
 - [ONNX Runtime](https://onnxruntime.ai/)  
 
