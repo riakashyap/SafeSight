@@ -45,7 +45,7 @@ python app.py
 
 ### 5. Run the app
 
-To view the output videos navigate to `runs/detect/predict*`
+To view the output videos navigate to `runs/detect/predict*`.
 
 ---
 
